@@ -3,23 +3,34 @@ import { ref, watch } from 'vue'
 import { parseMarkdown } from './parse.js'
 
 const props = defineProps({
-    notePath: String
+    route: String,
 })
 
-const htmlContent = ref('')
-const metadataRef = ref({})
+const noteContent = ref('')
+const noteMetadata = ref({})
 
-watch(() => props.notePath, async (path) => {
-  if (!path) return
-  const { metadata, html } = await parseMarkdown(path)
-  metadataRef.value = metadata
-  htmlContent.value = html
-}, { immediate: true })
+watch(
+    () => props.route, // react to route change
+    async (route) => {
+        if (!route) return
+        const { path, metadata, html } = await parseMarkdown(route) // destructure response
+        noteMetadata.value = metadata
+        noteContent.value = html
+    }, { immediate: true }
+)
+
 </script>
 
 <template>
-    <div v-html="htmlContent"></div>
+    <div class="text">
+        <div v-html="noteContent"></div>
+    </div>
 </template>
 
 <style>
+.text {
+    color: #1B1C1C;
+    background-color: #986C98;
+    padding: 1rem;
+}
 </style>

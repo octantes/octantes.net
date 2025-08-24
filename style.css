@@ -1,0 +1,19 @@
+html, body, #octantes {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  background-color: #1b1c1c;
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+#octantes > .root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}

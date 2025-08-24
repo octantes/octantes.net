@@ -1,18 +1,25 @@
 <script setup>
-import { ref, watch } from 'vue'
 import Markdown from '../recursos/markdown.vue'
+import Shader from '../recursos/shader.vue';
 
 const props = defineProps({
-    notePath: String
+    route: String,
 })
 </script>
 
 <template>
     <div class="post">
-        <Markdown :notePath="notePath"/>
+        <Shader v-if="!route" />
+        <Markdown v-else :route="route"/>
     </div>
 </template>
 
 <style>
-
+.post {
+    background-color: #986C98;
+    border-style: solid;
+    border-width: 2px;
+    border-color: #AAABAC;
+    width: 100%;
+}
 </style>
