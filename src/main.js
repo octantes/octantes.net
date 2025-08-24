@@ -1,4 +1,4 @@
 import { createApp } from 'vue'
-import App from './App.vue'
+import octantes from './octantes.vue'
 
-createApp(App).mount('#app')
+createApp(octantes).mount('#octantes')
