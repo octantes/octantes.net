@@ -1,12 +1,14 @@
 <script setup>
-import Display from './visores/display.vue'
+import Content from './visores/content.vue'
+import Navigation from './visores/navigation.vue'
 import Footer from './visores/footer.vue'
 </script>
 
 <template>
     <div class="pagina">
-        <div class="top">
-            <Display/>
+        <div class="layout">
+            <Navigation class="navigation"/>
+            <Content class="content" route="/octantes/octantes.net.md"/>
         </div>
         <div class="footer">
             <Footer/>
@@ -23,8 +25,17 @@ import Footer from './visores/footer.vue'
     padding: 1rem;
     gap: 1rem;
 }
-.top {
-    display: flex;
+.layout {
+    display: grid;
+    grid-template-columns: 5fr 3fr;
+    width: 100%;
+    gap: 1rem;
     flex: 1 1 auto;
+}
+@media (max-width: 1080px) {
+  .layout {
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+  }
 }
 </style>

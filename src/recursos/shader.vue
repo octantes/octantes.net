@@ -1,4 +1,6 @@
 <script setup>
+// credits: https://speckyboy.com/css-javascript-ascii-artwork-snippets/
+
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 
 const gridRef = ref(null)

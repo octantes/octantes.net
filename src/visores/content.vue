@@ -17,9 +17,7 @@ const props = defineProps({
 <style>
 .post {
     background-color: #986C98;
-    border-style: solid;
-    border-width: 2px;
-    border-color: #AAABAC;
+    border: 1px, solid, #AAABAC;
     width: 100%;
 }
 </style>

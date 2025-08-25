@@ -6,12 +6,9 @@
 
 <style>
 .navigation {
+    background-color: #1B1C1C;
     color: #D8DADE;
-    background-color: #0F0C0C;
-    width: 100%;
     padding: 1rem;
-    border-style: solid;
-    border-width: 2px;
-    border-color: #AAABAC;
+    border: 1px, solid, #AAABAC;
 }
 </style>
