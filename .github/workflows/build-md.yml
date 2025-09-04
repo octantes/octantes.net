@@ -16,10 +16,8 @@ jobs:
           node-version: 20
       - run: npm ci
       - run: node buildstep.js
-      - name: commit build
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/
-          git commit -m "actualización de build" || true
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "actualización de build"
+          branch: main
+          file_pattern: docs/**
