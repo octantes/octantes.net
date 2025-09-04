@@ -4,7 +4,7 @@ import { ref, onMounted } from 'vue'
 const notes = ref([])
 
 onMounted(async () => {
-  const res = await fetch(import.meta.env.BASE_URL + 'index.json')
+  const res = await fetch('./index.json')
   notes.value = await res.json()
 })
 </script>
