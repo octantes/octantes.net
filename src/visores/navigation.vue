@@ -32,9 +32,12 @@ onMounted(async () => {
 
 <style>
 .navigation {
-    background-color: #1B1C1C;
-    color: #D8DADE;
-    padding: 1rem;
-    border: 1px, solid, #AAABAC;
+  display: flex;
+  flex-direction: column;
+  background-color: #1B1C1C;
+  color: #D8DADE;
+  padding: 1rem;
+  border: 1px, solid, #AAABAC;
+
 }
 </style>

@@ -10,6 +10,7 @@ export default defineConfig({
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
   build: {
-    outDir: 'docs', // carpeta de build
+    outDir: 'dist', // carpeta de build
+    emptyOutDir: true, // limpia dist antes de buildear
   },
 })
