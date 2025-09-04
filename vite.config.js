@@ -6,6 +6,7 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/octantes.net/', // asegura que los assets apunten al path correcto en GitHub Pages
   plugins: [
     vue(),
     vueDevTools(),
@@ -17,5 +18,6 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist', // carpeta de build
+    emptyOutDir: true, // limpia dist antes de build
   },
 })
