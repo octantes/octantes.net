@@ -9,7 +9,6 @@ permissions:
 
 jobs:
   build:
-    # evita el loop: si el commit lo hizo el bot, no corremos
     if: ${{ github.actor != 'github-actions[bot]' }}
     runs-on: ubuntu-latest
 
@@ -32,9 +31,6 @@ jobs:
 
       - name: build SPA with Vite
         run: npm run build
-
-      - name: ensure .nojekyll
-        run: echo ".nojekyll" > docs/.nojekyll
 
       - name: commit & push generated files (only if changed)
         run: |
