@@ -1,0 +1,52 @@
+//integracion a Markdown.vue
+
+<script setup>
+import { ref, watch } from 'vue'
+
+const props = defineProps({ route: String })
+
+const noteContent = ref('')
+
+watch(() => props.route, async (route) => {
+  if (!route) return
+  const res = await fetch(`/posts/${route}/index.html`)
+  noteContent.value = await res.text()
+}, { immediate: true })
+</script>
+
+<template>
+  <div class="text" v-html="noteContent"></div>
+</template>
+
+---
+
+integracion a nav
+
+
+<script setup>
+import { ref, onMounted } from 'vue'
+const notes = ref([])
+
+onMounted(async () => {
+  const res = await fetch('/index.json')
+  notes.value = await res.json()
+})
+</script>
+
+<template>
+  <table>
+    <thead>
+      <tr>
+        <th>Título</th><th>Fecha</th><th>Tags</th><th>Link</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="note in notes" :key="note.url">
+        <td>{{ note.title }}</td>
+        <td>{{ note.date }}</td>
+        <td>{{ note.tags.join(', ') }}</td>
+        <td><a :href="note.url">Ver</a></td>
+      </tr>
+    </tbody>
+  </table>
+</template>
