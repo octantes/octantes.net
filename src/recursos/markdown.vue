@@ -1,6 +1,5 @@
 <script setup>
 import { ref, watch } from 'vue'
-import { parseMarkdown } from './parse.js'
 
 const props = defineProps({
     route: String,
@@ -12,12 +11,10 @@ watch(
     () => props.route, // react to route change
     async (route) => {
         if (!route) return
-        const { path, metadata, html } = await parseMarkdown(route) // destructure response
-        noteMetadata.value = metadata
+        const res = await fetch('posts/${route}/index.html')
         noteContent.value = html
     }, { immediate: true }
 )
-
 </script>
 
 <template>
