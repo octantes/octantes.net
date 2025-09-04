@@ -33,12 +33,6 @@ jobs:
       - name: build SPA with Vite
         run: npm run build
 
-      - name: copy dist to docs
-        run: |
-          rm -rf docs
-          mkdir docs
-          cp -r dist/* docs/
-
       - name: ensure .nojekyll
         run: echo ".nojekyll" > docs/.nojekyll
 
