@@ -7,7 +7,6 @@ const props = defineProps({
 })
 
 const noteContent = ref('')
-const noteMetadata = ref({})
 
 watch(
     () => props.route, // react to route change
