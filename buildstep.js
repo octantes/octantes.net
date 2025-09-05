@@ -78,8 +78,10 @@ for (const file of files) {
   cache[file] = hash
 }
 
-// escribir index.json para la tabla y cache
+// escribir index.json en docs y en docs/spa
 await fs.writeFile('./docs/index.json', JSON.stringify(index, null, 2))
-await fs.writeFile(cacheFile, JSON.stringify(cache, null, 2))
+await fs.mkdir('./docs/spa', { recursive: true })
+await fs.writeFile('./docs/spa/index.json', JSON.stringify(index, null, 2))
+
 
 console.log('build completado: html de notas + index.json generados.')
