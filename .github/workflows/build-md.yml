@@ -34,9 +34,7 @@ jobs:
 
       - name: copy dist to docs
         run: |
-          mkdir docs/
           cp -r dist/* docs/
-
 
       - name: commit & push generated files
         run: |
