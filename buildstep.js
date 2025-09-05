@@ -80,8 +80,5 @@ for (const file of files) {
 
 // escribir index.json en docs y en docs/spa
 await fs.writeFile('./docs/index.json', JSON.stringify(index, null, 2))
-await fs.mkdir('./docs/spa', { recursive: true })
-await fs.writeFile('./docs/spa/index.json', JSON.stringify(index, null, 2))
-
 
 console.log('build completado: html de notas + index.json generados.')
