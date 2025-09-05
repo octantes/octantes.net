@@ -26,9 +26,6 @@ jobs:
       - name: install deps
         run: npm ci
 
-      - name: run build step
-        run: node buildstep.js
-
       - name: build SPA with Vite
         run: npm run build
 
@@ -39,6 +36,9 @@ jobs:
           # re-copiamos el index.json y posts (que buildstep ya generó)
           cp -r docs/index.json dist/ docs/
           cp -r docs/posts dist/ docs/
+
+      - name: run build step
+        run: node buildstep.js
 
       - name: commit & push generated files
         run: |
