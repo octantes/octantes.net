@@ -11,7 +11,7 @@ watch(
     () => props.route, // react to route change
     async (route) => {
         if (!route) return
-        const res = await fetch(props.route)
+        const res = await fetch(import.meta.env.BASE_URL + route)
         noteContent.value = await res.text()
     }, { immediate: true }
 )
