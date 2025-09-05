@@ -36,7 +36,7 @@ jobs:
 
       - name: copy dist to docs
         run: |
-          cp -r dist/* docs/spa/
+          cp -r dist/* docs/
 
       - name: commit & push generated files
         run: |

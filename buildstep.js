@@ -29,7 +29,7 @@ try {
     const slug = dirent.name
     if (!contentSlugs.includes(slug)) {
       await fs.rm(path.join(outputDir, slug), { recursive: true, force: true })
-      delete cache[`${slug}.md`] // limpiar del cache también
+      delete cache[`${slug}.md`]
     }
   }
 } catch {
@@ -42,44 +42,33 @@ for (const file of files) {
   if (!file.endsWith('.md')) continue
   const filePath = path.join(contentDir, file)
   const raw = await fs.readFile(filePath, 'utf-8')
-
-  // hash del contenido
-  const hash = crypto.createHash('sha256').update(raw).digest('hex')
+  const { attributes, body } = fm(raw)
   const slug = file.replace(/\.md$/, '')
+  const hash = crypto.createHash('sha256').update(raw).digest('hex')
 
-  if (cache[file] === hash) {
+  // escribir html solo si cambió
+  if (cache[file] !== hash) {
+    const htmlContent = md.render(body)
+    const noteOutputDir = path.join(outputDir, slug)
+    await fs.mkdir(noteOutputDir, { recursive: true })
+    await fs.writeFile(path.join(noteOutputDir, 'index.html'), htmlContent)
+    cache[file] = hash
+  } else {
     console.log(`skip ${file} (unchanged)`)
-    index.push({
-      title: slug,
-      date: '',
-      tags: [],
-      url: `/posts/${slug}/index.html`
-    })
-    continue
   }
 
-  const { attributes, body } = fm(raw)
-  const htmlContent = md.render(body)
-
-  // escribir html por nota
-  const noteOutputDir = path.join(outputDir, slug)
-  await fs.mkdir(noteOutputDir, { recursive: true })
-  await fs.writeFile(path.join(noteOutputDir, 'index.html'), htmlContent)
-
-  // agregar a index
+  // agregar a index siempre usando front-matter
   index.push({
     title: attributes.title || slug,
     date: attributes.date || '',
     tags: attributes.tags || [],
     url: `/posts/${slug}/index.html`
   })
-
-  // actualizar cache
-  cache[file] = hash
 }
 
-// escribir index.json en docs y en docs/spa
+// escribir index.json y cache
 await fs.writeFile(cacheFile, JSON.stringify(cache, null, 2))
 await fs.writeFile('./docs/index.json', JSON.stringify(index, null, 2))
+await fs.writeFile('./dist/index.json', JSON.stringify(index, null, 2))
 
 console.log('build completado: html de notas + index.json generados.')
