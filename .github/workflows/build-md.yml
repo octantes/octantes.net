@@ -34,10 +34,7 @@ jobs:
         run: |
           node buildstep.js
 
-      - name: 3. remove old docs
-        run: rm -rf docs
-
-      - name: 4. copy full dist to docs
+      - name: 3. copy dist to docs
         run: |
           mkdir -p docs
           cp -r dist/* docs/
