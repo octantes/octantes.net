@@ -67,8 +67,8 @@ for (const file of files) {
 }
 
 // escribir index.json y cache
-await fs.writeFile(cacheFile, JSON.stringify(cache, null, 2))
-await fs.writeFile('./docs/index.json', JSON.stringify(index, null, 2))
+
+await fs.mkdir('./dist', { recursive: true })
 await fs.writeFile('./dist/index.json', JSON.stringify(index, null, 2))
 
 console.log('build completado: html de notas + index.json generados.')

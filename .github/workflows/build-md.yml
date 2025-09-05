@@ -34,8 +34,12 @@ jobs:
       - name: build SPA with Vite
         run: npm run build
 
+      - name: clean docs
+        run: rm -rf docs
+
       - name: copy dist to docs
         run: |
+          mkdir -p docs
           cp -r dist/* docs/
 
       - name: commit & push generated files
