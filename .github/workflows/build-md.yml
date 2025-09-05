@@ -27,12 +27,12 @@ jobs:
       - name: install deps
         run: npm ci
 
+      - name: build SPA with Vite
+        run: npm run build
+
       - name: run build step
         run: |
           node buildstep.js
-
-      - name: build SPA with Vite
-        run: npm run build
 
       - name: clean docs
         run: rm -rf docs
