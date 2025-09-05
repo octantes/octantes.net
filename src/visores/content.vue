@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue'
-import Shader from '../recursos/shader.vue';
+import Shader from '../recursos/shader.vue'
 
 const props = defineProps({
     route: String,
@@ -9,12 +9,19 @@ const props = defineProps({
 const noteContent = ref('')
 
 watch(
-    () => props.route, // react to route change
+    () => props.route,
     async (route) => {
         if (!route) return
-        const res = await fetch(import.meta.env.BASE_URL + route)
-        noteContent.value = await res.text()
-    }, { immediate: true }
+        try {
+            const res = await fetch(import.meta.env.BASE_URL + route)
+            if (!res.ok) throw new Error(`HTTP error ${res.status}`)
+            noteContent.value = await res.text()
+        } catch (e) {
+            noteContent.value = `<p>Error cargando la nota</p>`
+            console.error(`Error fetching route "${route}":`, e)
+        }
+    },
+    { immediate: true }
 )
 </script>
 

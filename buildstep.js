@@ -55,14 +55,16 @@ for (const slug of postDirs) {
   const noteOutputDir = path.join(postsDir, slug)
   await fs.mkdir(noteOutputDir, { recursive: true })
 
-  // --- hash combinado de markdown + assets ---
+  // --- hash combinado de markdown + assets + copia de assets ---
   const hash = crypto.createHash('sha256').update(raw)
   try {
     const assets = await fs.readdir(postFolder, { withFileTypes: true })
     for (const asset of assets) {
       if (asset.isFile() && asset.name !== 'index.md') {
-        const assetData = await fs.readFile(path.join(postFolder, asset.name))
-        hash.update(assetData)
+        const assetPath = path.join(postFolder, asset.name)
+        const data = await fs.readFile(assetPath)       // leemos una sola vez
+        hash.update(data)
+        await fs.writeFile(path.join(noteOutputDir, asset.name), data) // copiamos
       }
     }
   } catch {}
@@ -77,19 +79,7 @@ for (const slug of postDirs) {
     const basePath = '../'.repeat(relativeDepth)
     htmlContent = htmlContent.replace(/(src|href)=(['"])\.\//g, `$1=$2${basePath}`)
 
-
     await fs.writeFile(path.join(noteOutputDir, 'index.html'), htmlContent)
-
-    // copiar assets
-    try {
-      const assets = await fs.readdir(postFolder, { withFileTypes: true })
-      for (const asset of assets) {
-        if (asset.isFile() && asset.name !== 'index.md') {
-          await fs.copyFile(path.join(postFolder, asset.name), path.join(noteOutputDir, asset.name))
-        }
-      }
-    } catch {}
-
     cache[`${slug}/index.md`] = finalHash
   } else {
     console.log(`skip ${slug}/index.md (unchanged)`)
