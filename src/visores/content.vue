@@ -1,28 +1,47 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import Shader from '../recursos/shader.vue'
 
-const props = defineProps({
-    route: String,
-})
-
+const props = defineProps({ route: String })
 const noteContent = ref('')
 
+async function loadNote(route) {
+    if (!route) return
+    try {
+        const res = await fetch(import.meta.env.BASE_URL + route)
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`)
+        noteContent.value = await res.text()
+    } catch (e) {
+        noteContent.value = `<p>Error cargando la nota</p>`
+        console.error(`Error fetching route "${route}":`, e)
+    }
+}
+
+// inicializar ruta desde URL si existe
+onMounted(() => {
+    const path = window.location.pathname.replace(import.meta.env.BASE_URL, '')
+    if (path && path !== '/') {
+        loadNote(path)
+    }
+})
+
+// actualizar contenido cuando cambia props.route
 watch(
     () => props.route,
-    async (route) => {
+    (route) => {
         if (!route) return
-        try {
-            const res = await fetch(import.meta.env.BASE_URL + route)
-            if (!res.ok) throw new Error(`HTTP error ${res.status}`)
-            noteContent.value = await res.text()
-        } catch (e) {
-            noteContent.value = `<p>Error cargando la nota</p>`
-            console.error(`Error fetching route "${route}":`, e)
-        }
+        loadNote(route)
+        // actualizar URL sin recargar la página
+        history.pushState({ route }, '', import.meta.env.BASE_URL + route)
     },
-    { immediate: true }
+    { immediate: false }
 )
+
+// escuchar back/forward
+window.addEventListener('popstate', (e) => {
+    const route = e.state?.route || ''
+    loadNote(route)
+})
 </script>
 
 <template>

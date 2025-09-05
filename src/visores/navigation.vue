@@ -14,6 +14,7 @@ onMounted(async () => {
 
 function openNote(url) {
   emit('update:modelValue', url)
+  history.pushState({ route: url }, '', import.meta.env.BASE_URL + url)
 }
 </script>
 
