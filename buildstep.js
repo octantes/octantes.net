@@ -91,6 +91,13 @@ try {
   prevIndex = await fs.readFile(indexPath, 'utf-8')
 } catch {}
 
+// ordenar index cronológicamente descendente (más reciente primero)
+index.sort((a, b) => {
+  const dateA = new Date(a.date)
+  const dateB = new Date(b.date)
+  return dateB - dateA
+})
+
 const newIndexStr = JSON.stringify(index, null, 2)
 
 if (prevIndex !== newIndexStr) {
