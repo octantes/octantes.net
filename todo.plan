@@ -1,4 +1,3 @@
-- separar dist spa de dist de contenido para poder subir mds sin reconstruir spa
 - agregar construccion de rutas relativas para assets al crear los html
 - paralelizar la escritura de los html para cuando tengamos muchos
 - cambiar el index.json para que se cree con orden cronologico

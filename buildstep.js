@@ -7,7 +7,7 @@ import fm from 'front-matter'
 const md = new MarkdownIt()
 
 const contentDir = './content'
-const outputDir = './dist-content' // todo en dist-content
+const outputDir = './dist' // todo en dist-content
 const cacheFile = './.build-cache.json'
 
 let cache = {}
