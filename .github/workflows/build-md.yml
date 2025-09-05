@@ -34,9 +34,11 @@ jobs:
 
       - name: copy dist to docs
         run: |
-          rm -rf docs/spa
-          mkdir docs/spa
-          cp -r dist/* docs/spa/
+          rm -rf docs/*
+          cp -r dist/* docs/
+          # re-copiamos el index.json y posts (que buildstep ya generó)
+          cp -r docs/index.json dist/ docs/
+          cp -r docs/posts dist/ docs/
 
       - name: commit & push generated files
         run: |
