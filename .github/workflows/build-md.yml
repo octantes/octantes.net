@@ -34,10 +34,10 @@ jobs:
         run: |
           node buildstep.js
 
-      - name: 3. copy dist to docs
+      - name: 3. sync dist to docs
         run: |
           mkdir -p docs
-          cp -r dist/* docs/
+          rsync -a --delete dist/ docs/
 
       - name: commit & push generated files
         run: |

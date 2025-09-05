@@ -37,19 +37,6 @@ try {
   await fs.mkdir(postsDir, { recursive: true })
 }
 
-// --- limpieza de directorios obsoletos en docs/posts ---
-const docsPostsDir = './docs/posts'
-try {
-  const existingDocs = await fs.readdir(docsPostsDir, { withFileTypes: true })
-  for (const dirent of existingDocs) {
-    if (!dirent.isDirectory()) continue
-    const slug = dirent.name
-    if (!contentSlugs.includes(slug)) {
-      await fs.rm(path.join(docsPostsDir, slug), { recursive: true, force: true })
-    }
-  }
-} catch {}
-
 // --- generar HTML y construir índice ---
 const index = []
 
