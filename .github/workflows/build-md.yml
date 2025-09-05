@@ -26,6 +26,9 @@ jobs:
       - name: install deps
         run: npm ci
 
+      - name: run build step
+        run: node buildstep.js
+
       - name: build SPA with Vite
         run: npm run build
 
@@ -34,8 +37,6 @@ jobs:
           mkdir docs/
           cp -r dist/* docs/
 
-      - name: run build step
-        run: node buildstep.js
 
       - name: commit & push generated files
         run: |
