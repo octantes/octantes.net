@@ -7,7 +7,7 @@ import fm from 'front-matter'
 const md = new MarkdownIt()
 
 const contentDir = './content'
-const outputDir = './dist' // todo en dist-content
+const outputDir = './dist'
 const cacheFile = './.build-cache.json'
 
 let cache = {}
@@ -37,36 +37,49 @@ try {
   await fs.mkdir(postsDir, { recursive: true })
 }
 
-// --- generar HTML y construir índice ---
+// --- generar HTML y construir índice en paralelo de manera segura ---
+const indexItems = await Promise.all(
+  files
+    .filter(f => f.endsWith('.md'))
+    .map(async (file) => {
+      const filePath = path.join(contentDir, file)
+      const raw = await fs.readFile(filePath, 'utf-8')
+      const { attributes, body } = fm(raw)
+      const slug = file.replace(/\.md$/, '')
+      const hash = crypto.createHash('sha256').update(raw).digest('hex')
+
+      const noteOutputDir = path.join(postsDir, slug)
+      await fs.mkdir(noteOutputDir, { recursive: true })
+
+      if (cache[file] !== hash) {
+        let htmlContent = md.render(body)
+
+        // --- ajustar rutas relativas de assets ---
+        const slugSegments = slug.split('/').filter(Boolean).length
+        const ups = slugSegments + 1
+        const basePath = '../'.repeat(ups)
+        htmlContent = htmlContent.replace(/(src|href)=(['"])\.\/+/g, (m, attr, quote) => {
+          return `${attr}=${quote}${basePath}`
+        })
+        // ---------------------------------------
+
+        await fs.writeFile(path.join(noteOutputDir, 'index.html'), htmlContent)
+        cache[file] = hash
+      } else {
+        console.log(`skip ${file} (unchanged)`)
+      }
+
+      return {
+        title: attributes.title || slug,
+        date: attributes.date || '',
+        tags: attributes.tags || [],
+        url: `/posts/${slug}/index.html`
+      }
+    })
+)
+
 const index = []
-
-for (const file of files) {
-  if (!file.endsWith('.md')) continue
-  const filePath = path.join(contentDir, file)
-  const raw = await fs.readFile(filePath, 'utf-8')
-  const { attributes, body } = fm(raw)
-  const slug = file.replace(/\.md$/, '')
-  const hash = crypto.createHash('sha256').update(raw).digest('hex')
-
-  // escribir html solo si cambió
-  if (cache[file] !== hash) {
-    const htmlContent = md.render(body)
-    const noteOutputDir = path.join(postsDir, slug)
-    await fs.mkdir(noteOutputDir, { recursive: true })
-    await fs.writeFile(path.join(noteOutputDir, 'index.html'), htmlContent)
-    cache[file] = hash
-  } else {
-    console.log(`skip ${file} (unchanged)`)
-  }
-
-  // agregar al índice siempre con front-matter
-  index.push({
-    title: attributes.title || slug,
-    date: attributes.date || '',
-    tags: attributes.tags || [],
-    url: `/posts/${slug}/index.html`
-  })
-}
+index.push(...indexItems)
 
 // asegurarse de que dist exista
 await fs.mkdir(outputDir, { recursive: true })
