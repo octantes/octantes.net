@@ -84,8 +84,23 @@ for (const file of files) {
 // asegurarse de que dist exista
 await fs.mkdir(outputDir, { recursive: true })
 
-// escribir index.json y cache dentro de dist
-await fs.writeFile(path.join(outputDir, 'index.json'), JSON.stringify(index, null, 2))
+// --- minimizar escrituras de index.json ---
+const indexPath = path.join(outputDir, 'index.json')
+let prevIndex = '[]'
+try {
+  prevIndex = await fs.readFile(indexPath, 'utf-8')
+} catch {}
+
+const newIndexStr = JSON.stringify(index, null, 2)
+
+if (prevIndex !== newIndexStr) {
+  await fs.writeFile(indexPath, newIndexStr)
+  console.log('index.json actualizado')
+} else {
+  console.log('index.json sin cambios, no se sobrescribe')
+}
+
+// escribir cache
 await fs.writeFile(cacheFile, JSON.stringify(cache, null, 2))
 
 console.log('build completado: html de notas + index.json y cache generados.')
