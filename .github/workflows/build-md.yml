@@ -27,17 +27,17 @@ jobs:
       - name: install deps
         run: npm ci
 
-      - name: build SPA with Vite
+      - name: 1. build spa using vite
         run: npm run build
 
-      - name: run build step
+      - name: 2. run buildstep for htmls and index
         run: |
           node buildstep.js
 
-      - name: clean docs
+      - name: 3. remove old docs
         run: rm -rf docs
 
-      - name: copy dist to docs
+      - name: 4. copy full dist to docs
         run: |
           mkdir -p docs
           cp -r dist/* docs/

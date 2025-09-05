@@ -7,7 +7,7 @@ import fm from 'front-matter'
 const md = new MarkdownIt()
 
 const contentDir = './content'
-const outputDir = './docs/posts'
+const outputDir = './dist' // todo en dist
 const cacheFile = './.build-cache.json'
 
 let cache = {}
@@ -23,17 +23,17 @@ const files = await fs.readdir(contentDir)
 const contentSlugs = files.filter(f => f.endsWith('.md')).map(f => f.replace(/\.md$/, ''))
 
 try {
-  const existingDirs = await fs.readdir(outputDir, { withFileTypes: true })
+  const existingDirs = await fs.readdir(path.join(outputDir, 'posts'), { withFileTypes: true })
   for (const dirent of existingDirs) {
     if (!dirent.isDirectory()) continue
     const slug = dirent.name
     if (!contentSlugs.includes(slug)) {
-      await fs.rm(path.join(outputDir, slug), { recursive: true, force: true })
+      await fs.rm(path.join(outputDir, 'posts', slug), { recursive: true, force: true })
       delete cache[`${slug}.md`]
     }
   }
 } catch {
-  await fs.mkdir(outputDir, { recursive: true })
+  await fs.mkdir(path.join(outputDir, 'posts'), { recursive: true })
 }
 
 const index = []
@@ -49,7 +49,7 @@ for (const file of files) {
   // escribir html solo si cambió
   if (cache[file] !== hash) {
     const htmlContent = md.render(body)
-    const noteOutputDir = path.join(outputDir, slug)
+    const noteOutputDir = path.join(outputDir, 'posts', slug)
     await fs.mkdir(noteOutputDir, { recursive: true })
     await fs.writeFile(path.join(noteOutputDir, 'index.html'), htmlContent)
     cache[file] = hash
@@ -57,7 +57,7 @@ for (const file of files) {
     console.log(`skip ${file} (unchanged)`)
   }
 
-  // agregar a index siempre usando front-matter
+  // agregar al índice siempre con front-matter
   index.push({
     title: attributes.title || slug,
     date: attributes.date || '',
@@ -66,9 +66,11 @@ for (const file of files) {
   })
 }
 
-// escribir index.json y cache
+// asegurarse de que dist exista
+await fs.mkdir(outputDir, { recursive: true })
 
-await fs.mkdir('./dist', { recursive: true })
-await fs.writeFile('./dist/index.json', JSON.stringify(index, null, 2))
+// escribir index.json y cache dentro de dist
+await fs.writeFile(path.join(outputDir, 'index.json'), JSON.stringify(index, null, 2))
+await fs.writeFile(cacheFile, JSON.stringify(cache, null, 2))
 
-console.log('build completado: html de notas + index.json generados.')
+console.log('build completado: html de notas + index.json y cache generados.')
