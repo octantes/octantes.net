@@ -73,12 +73,10 @@ for (const slug of postDirs) {
     let htmlContent = md.render(body)
 
     // --- ajustar rutas relativas de assets ---
-    const slugSegments = slug.split('/').filter(Boolean).length
-    const ups = slugSegments + 1
-    const basePath = '../'.repeat(ups)
-    htmlContent = htmlContent.replace(/(src|href)=(['"])\.\/+/g, (m, attr, quote) => {
-      return `${attr}=${quote}${basePath}`
-    })
+    const relativeDepth = path.relative(outputDir, noteOutputDir).split(path.sep).length
+    const basePath = '../'.repeat(relativeDepth)
+    htmlContent = htmlContent.replace(/(src|href)=(['"])\.\//g, `$1=$2${basePath}`)
+
 
     await fs.writeFile(path.join(noteOutputDir, 'index.html'), htmlContent)
 
@@ -98,6 +96,7 @@ for (const slug of postDirs) {
   }
 
   indexItems.push({
+    slug,
     title: attributes.title || slug,
     date: attributes.date || '',
     tags: attributes.tags || [],
