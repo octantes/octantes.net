@@ -18,24 +18,39 @@ try {
   cache = {}
 }
 
-// --- limpieza de directorios obsoletos ---
+// --- limpieza de directorios obsoletos en dist/posts ---
 const files = await fs.readdir(contentDir)
 const contentSlugs = files.filter(f => f.endsWith('.md')).map(f => f.replace(/\.md$/, ''))
 
+const postsDir = path.join(outputDir, 'posts')
 try {
-  const existingDirs = await fs.readdir(path.join(outputDir, 'posts'), { withFileTypes: true })
+  const existingDirs = await fs.readdir(postsDir, { withFileTypes: true })
   for (const dirent of existingDirs) {
     if (!dirent.isDirectory()) continue
     const slug = dirent.name
     if (!contentSlugs.includes(slug)) {
-      await fs.rm(path.join(outputDir, 'posts', slug), { recursive: true, force: true })
+      await fs.rm(path.join(postsDir, slug), { recursive: true, force: true })
       delete cache[`${slug}.md`]
     }
   }
 } catch {
-  await fs.mkdir(path.join(outputDir, 'posts'), { recursive: true })
+  await fs.mkdir(postsDir, { recursive: true })
 }
 
+// --- limpieza de directorios obsoletos en docs/posts ---
+const docsPostsDir = './docs/posts'
+try {
+  const existingDocs = await fs.readdir(docsPostsDir, { withFileTypes: true })
+  for (const dirent of existingDocs) {
+    if (!dirent.isDirectory()) continue
+    const slug = dirent.name
+    if (!contentSlugs.includes(slug)) {
+      await fs.rm(path.join(docsPostsDir, slug), { recursive: true, force: true })
+    }
+  }
+} catch {}
+
+// --- generar HTML y construir índice ---
 const index = []
 
 for (const file of files) {
@@ -49,7 +64,7 @@ for (const file of files) {
   // escribir html solo si cambió
   if (cache[file] !== hash) {
     const htmlContent = md.render(body)
-    const noteOutputDir = path.join(outputDir, 'posts', slug)
+    const noteOutputDir = path.join(postsDir, slug)
     await fs.mkdir(noteOutputDir, { recursive: true })
     await fs.writeFile(path.join(noteOutputDir, 'index.html'), htmlContent)
     cache[file] = hash
