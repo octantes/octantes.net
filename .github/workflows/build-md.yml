@@ -31,13 +31,13 @@ jobs:
         run: npm run build
 
       - name: 2. run buildstep for htmls and index
-        run: |
-          node buildstep.js
+        run: node buildstep.js
 
-      - name: 3. sync dist to docs
+      - name: 3. sync dist-spa and dist-content to docs
         run: |
           mkdir -p docs
-          rsync -a --delete dist/ docs/
+          rsync -a --delete dist-spa/ docs/
+          rsync -a --delete dist-content/ docs/
 
       - name: commit & push generated files
         run: |
