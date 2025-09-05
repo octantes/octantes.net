@@ -19,8 +19,9 @@ try {
 }
 
 // --- limpieza de directorios obsoletos en dist/posts ---
-const files = await fs.readdir(contentDir)
-const contentSlugs = files.filter(f => f.endsWith('.md')).map(f => f.replace(/\.md$/, ''))
+const postDirs = (await fs.readdir(contentDir, { withFileTypes: true }))
+  .filter(d => d.isDirectory())
+  .map(d => d.name)
 
 const postsDir = path.join(outputDir, 'posts')
 try {
@@ -28,58 +29,81 @@ try {
   for (const dirent of existingDirs) {
     if (!dirent.isDirectory()) continue
     const slug = dirent.name
-    if (!contentSlugs.includes(slug)) {
+    if (!postDirs.includes(slug)) {
       await fs.rm(path.join(postsDir, slug), { recursive: true, force: true })
-      delete cache[`${slug}.md`]
+      delete cache[`${slug}/index.md`]
     }
   }
 } catch {
   await fs.mkdir(postsDir, { recursive: true })
 }
 
-// --- generar HTML y construir índice en paralelo de manera segura ---
-const indexItems = await Promise.all(
-  files
-    .filter(f => f.endsWith('.md'))
-    .map(async (file) => {
-      const filePath = path.join(contentDir, file)
-      const raw = await fs.readFile(filePath, 'utf-8')
-      const { attributes, body } = fm(raw)
-      const slug = file.replace(/\.md$/, '')
-      const hash = crypto.createHash('sha256').update(raw).digest('hex')
+// --- generar HTML y construir índice ---
+const indexItems = []
+for (const slug of postDirs) {
+  const postFolder = path.join(contentDir, slug)
+  const mdPath = path.join(postFolder, 'index.md')
+  let raw
+  try {
+    raw = await fs.readFile(mdPath, 'utf-8')
+  } catch {
+    console.warn(`no se encontró index.md en ${slug}, se saltea`)
+    continue
+  }
 
-      const noteOutputDir = path.join(postsDir, slug)
-      await fs.mkdir(noteOutputDir, { recursive: true })
+  const { attributes, body } = fm(raw)
+  const noteOutputDir = path.join(postsDir, slug)
+  await fs.mkdir(noteOutputDir, { recursive: true })
 
-      if (cache[file] !== hash) {
-        let htmlContent = md.render(body)
-
-        // --- ajustar rutas relativas de assets ---
-        const slugSegments = slug.split('/').filter(Boolean).length
-        const ups = slugSegments + 1
-        const basePath = '../'.repeat(ups)
-        htmlContent = htmlContent.replace(/(src|href)=(['"])\.\/+/g, (m, attr, quote) => {
-          return `${attr}=${quote}${basePath}`
-        })
-        // ---------------------------------------
-
-        await fs.writeFile(path.join(noteOutputDir, 'index.html'), htmlContent)
-        cache[file] = hash
-      } else {
-        console.log(`skip ${file} (unchanged)`)
+  // --- hash combinado de markdown + assets ---
+  const hash = crypto.createHash('sha256').update(raw)
+  try {
+    const assets = await fs.readdir(postFolder, { withFileTypes: true })
+    for (const asset of assets) {
+      if (asset.isFile() && asset.name !== 'index.md') {
+        const assetData = await fs.readFile(path.join(postFolder, asset.name))
+        hash.update(assetData)
       }
+    }
+  } catch {}
 
-      return {
-        title: attributes.title || slug,
-        date: attributes.date || '',
-        tags: attributes.tags || [],
-        url: `/posts/${slug}/index.html`
-      }
+  const finalHash = hash.digest('hex')
+
+  if (cache[`${slug}/index.md`] !== finalHash) {
+    let htmlContent = md.render(body)
+
+    // --- ajustar rutas relativas de assets ---
+    const slugSegments = slug.split('/').filter(Boolean).length
+    const ups = slugSegments + 1
+    const basePath = '../'.repeat(ups)
+    htmlContent = htmlContent.replace(/(src|href)=(['"])\.\/+/g, (m, attr, quote) => {
+      return `${attr}=${quote}${basePath}`
     })
-)
 
-const index = []
-index.push(...indexItems)
+    await fs.writeFile(path.join(noteOutputDir, 'index.html'), htmlContent)
+
+    // copiar assets
+    try {
+      const assets = await fs.readdir(postFolder, { withFileTypes: true })
+      for (const asset of assets) {
+        if (asset.isFile() && asset.name !== 'index.md') {
+          await fs.copyFile(path.join(postFolder, asset.name), path.join(noteOutputDir, asset.name))
+        }
+      }
+    } catch {}
+
+    cache[`${slug}/index.md`] = finalHash
+  } else {
+    console.log(`skip ${slug}/index.md (unchanged)`)
+  }
+
+  indexItems.push({
+    title: attributes.title || slug,
+    date: attributes.date || '',
+    tags: attributes.tags || [],
+    url: `/posts/${slug}/index.html`
+  })
+}
 
 // asegurarse de que dist exista
 await fs.mkdir(outputDir, { recursive: true })
@@ -91,14 +115,13 @@ try {
   prevIndex = await fs.readFile(indexPath, 'utf-8')
 } catch {}
 
-// ordenar index cronológicamente descendente (más reciente primero)
-index.sort((a, b) => {
-  const dateA = new Date(a.date)
-  const dateB = new Date(b.date)
+indexItems.sort((a, b) => {
+  const dateA = a.date ? new Date(a.date) : new Date(0)
+  const dateB = b.date ? new Date(b.date) : new Date(0)
   return dateB - dateA
 })
 
-const newIndexStr = JSON.stringify(index, null, 2)
+const newIndexStr = JSON.stringify(indexItems, null, 2)
 
 if (prevIndex !== newIndexStr) {
   await fs.writeFile(indexPath, newIndexStr)
