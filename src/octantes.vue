@@ -1,14 +1,17 @@
 <script setup>
+import { ref } from 'vue'
 import Content from './visores/content.vue'
 import Navigation from './visores/navigation.vue'
 import Footer from './visores/footer.vue'
+
+const currentRoute = ref('')
 </script>
 
 <template>
     <div class="pagina">
         <div class="layout">
-            <Navigation class="navigation"/>
-            <Content class="content" route="/octantes/octantes.net.md"/>
+            <Navigation class="navigation" v-model="currentRoute"/>
+            <Content class="content" :route="currentRoute"/>
         </div>
         <div class="footer">
             <Footer/>

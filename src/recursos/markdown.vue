@@ -11,8 +11,8 @@ watch(
     () => props.route, // react to route change
     async (route) => {
         if (!route) return
-        const res = await fetch('posts/${route}/index.html')
-        noteContent.value = html
+        const res = await fetch(props.route)
+        noteContent.value = await res.text()
     }, { immediate: true }
 )
 </script>

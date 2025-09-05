@@ -2,11 +2,19 @@
 import { ref, onMounted } from 'vue'
 
 const notes = ref([])
+const props = defineProps({
+  modelValue: String
+})
+const emit = defineEmits(['update:modelValue'])
 
 onMounted(async () => {
   const res = await fetch(import.meta.env.BASE_URL + 'index.json')
   notes.value = await res.json()
 })
+
+function openNote(url) {
+  emit('update:modelValue', url)
+}
 </script>
 
 <template>
@@ -15,7 +23,10 @@ onMounted(async () => {
           <table>
             <thead>
               <tr>
-                <th>Título</th><th>Fecha</th><th>Tags</th><th>Link</th>
+                <th>Título</th>
+                <th>Fecha</th>
+                <th>Tags</th>
+                <th>Link</th>
               </tr>
             </thead>
             <tbody>
@@ -23,7 +34,7 @@ onMounted(async () => {
                 <td>{{ note.title }}</td>
                 <td>{{ note.date }}</td>
                 <td>{{ note.tags.join(', ') }}</td>
-                <td><a :href="note.url">Ver</a></td>
+                <td><button @click="openNote(note.url)">Ver</button></td>
               </tr>
             </tbody>
           </table>
