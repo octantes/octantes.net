@@ -8,13 +8,17 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 onMounted(async () => {
-  const res = await fetch(import.meta.env.BASE_URL + 'index.json')
+  const res = await fetch(`${import.meta.env.BASE_URL.replace(/\/$/, '')}/index.json`)
   notes.value = await res.json()
 })
 
 function openNote(url) {
   emit('update:modelValue', url)
-  history.pushState({ route: url }, '', import.meta.env.BASE_URL + url)
+  history.pushState(
+    { route: url },
+    '',
+    `${import.meta.env.BASE_URL.replace(/\/$/, '')}/${url.replace(/^\/+/, '')}`
+  )
 }
 </script>
 
@@ -50,6 +54,5 @@ function openNote(url) {
   color: #D8DADE;
   padding: 1rem;
   border: 1px solid #AAABAC;
-
 }
 </style>

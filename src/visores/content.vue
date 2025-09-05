@@ -8,7 +8,7 @@ const noteContent = ref('')
 async function loadNote(route) {
     if (!route) return
     try {
-        const res = await fetch(import.meta.env.BASE_URL + route)
+        const res = await fetch(`${import.meta.env.BASE_URL.replace(/\/$/, '')}/${route.replace(/^\/+/, '')}`)
         if (!res.ok) throw new Error(`HTTP error ${res.status}`)
         noteContent.value = await res.text()
     } catch (e) {
@@ -19,7 +19,7 @@ async function loadNote(route) {
 
 // inicializar ruta desde URL si existe
 onMounted(() => {
-    const path = window.location.pathname.replace(import.meta.env.BASE_URL, '')
+    const path = window.location.pathname.replace(import.meta.env.BASE_URL.replace(/\/$/, ''), '')
     if (path && path !== '/') {
         loadNote(path)
     }
@@ -32,7 +32,11 @@ watch(
         if (!route) return
         loadNote(route)
         // actualizar URL sin recargar la página
-        history.pushState({ route }, '', import.meta.env.BASE_URL + route)
+        history.pushState(
+            { route },
+            '',
+            `${import.meta.env.BASE_URL.replace(/\/$/, '')}/${route.replace(/^\/+/, '')}`
+        )
     },
     { immediate: false }
 )
