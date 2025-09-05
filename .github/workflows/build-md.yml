@@ -31,11 +31,7 @@ jobs:
 
       - name: copy dist to docs
         run: |
-          rm -rf docs/*
           cp -r dist/* docs/
-          # re-copiamos el index.json y posts (que buildstep ya generó)
-          cp -r docs/index.json dist/ docs/
-          cp -r docs/posts dist/ docs/
 
       - name: run build step
         run: node buildstep.js
