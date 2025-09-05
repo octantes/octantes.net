@@ -79,6 +79,7 @@ for (const file of files) {
 }
 
 // escribir index.json en docs y en docs/spa
+await fs.writeFile(cacheFile, JSON.stringify(cache, null, 2))
 await fs.writeFile('./docs/index.json', JSON.stringify(index, null, 2))
 
 console.log('build completado: html de notas + index.json generados.')
