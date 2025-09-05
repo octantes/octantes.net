@@ -1,0 +1,33 @@
+<p>en versiones previas de la pagina, la <strong>estética</strong> era un problema</p>
+<ul>
+<li>estructura de ventanas triptica de twm, con un foco particular para cada <em>visor</em></li>
+<li>paleta de ocho colores basados en la commodore, con acentos magentas</li>
+<li>combinación de una font pixel para la consola (gohu) y una grotesk (space)</li>
+<li>uso frecuente de ascii art como filtro de las imágenes y vídeos incluidos</li>
+</ul>
+<p>hay dos dimensiones importantes a resolver para lograr la <strong>responsividad</strong> del layout
+tanto en mobile como en desktop, la <em>estructura triple debe mantenerse</em> siempre</p>
+<ol>
+<li>la división del viewport en columnas con dimensiones relativas (cssgrid)
+<ol>
+<li>usar grid-template-columns: 1fr, 4fr, 3fr para dividir la pantalla</li>
+<li>usar media queries para rearmar el layout de forma vertical</li>
+</ol>
+</li>
+<li>la definición de una grid interna para el ascii art
+<ol>
+<li>vw / gridsize (cantidad de símbolos) = ascii font size</li>
+<li>setear ese valor en root y usar em para escalarlo</li>
+<li>testear funcionamiento onzoom y onresize</li>
+</ol>
+</li>
+</ol>
+<ul>
+<li>el fondo es un tiling canvas oscuro con scroll lateral sobre el que carga el resto</li>
+<li>los visores implementan alpha mínimo con blur, emulando un TWM con picom</li>
+</ul>
+<hr>
+<p>tengo que diseñar un sistema para hacer el <strong>deploy</strong> que sea sostenible en el tiempo
+para eso el host debe ser gratuito, permitir un mínimo seo y usar un dominio custom
+lo mas simple para arrancar va a ser hostear en github pages y diseñar la escalabilidad
+pensando un sistema estructural que sea fácilmente adaptable a nuevas necesidades</p>
