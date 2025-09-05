@@ -1,0 +1,30 @@
+<p>en versiones previas de la pagina, la <strong>estética</strong> era un problema importante a consolidar
+la idea de <em>contener universos estéticos amplios</em> chocaba con la definición de un estilo
+para resolver esto, tome como referencia la expresión mínima de una interfaz: las CLI
+la estética final contiene un meme defensivo, que filtra usuarios realmente interesados</p>
+<ul>
+<li>estructura de ventanas triptica de twm, con un foco particular para cada <em>visor</em></li>
+<li>paleta de ocho colores basados en la commodore, con acentos magentas</li>
+<li>combinación de una font pixel para la consola (gohu) y una grotesk (space)</li>
+<li>uso frecuente de ascii art como filtro de las imágenes y vídeos incluidos</li>
+</ul>
+<p>hay dos dimensiones importantes a resolver para lograr la <strong>responsividad</strong> del layout
+tanto en mobile como en desktop, la <em>estructura triple debe mantenerse</em> siempre</p>
+<ol>
+<li>la división del viewport en columnas con dimensiones relativas (cssgrid)
+<ol>
+<li>usar grid-template-columns: 1fr, 4fr, 3fr para dividir la pantalla</li>
+<li>usar media queries para rearmar el layout de forma vertical</li>
+</ol>
+</li>
+<li>la definición de una grid interna para el ascii art
+<ol>
+<li>vw / gridsize (cantidad de símbolos) = ascii font size</li>
+<li>setear ese valor en root y usar em para escalarlo</li>
+<li>testear funcionamiento onzoom y onresize</li>
+</ol>
+</li>
+</ol>
+<p>probablemente implementar el <strong>visor</strong> nav-bar usando 1fr termine demasiado ancha
+para solucionarlo puedo hacer la division en dos layouts principales de 5fr y 3fr
+estableciendo la barra de navegacion en una grid fina dentro del visor principal</p>
