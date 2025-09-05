@@ -38,12 +38,6 @@ jobs:
           mkdir docs/spa
           cp -r dist/* docs/spa/
 
-      - name: copy index.json into spa
-        run: |
-          if [ -f docs/index.json ]; then
-            cp docs/index.json docs/spa/index.json
-          fi
-
       - name: commit & push generated files
         run: |
           git config user.name "github-actions[bot]"
