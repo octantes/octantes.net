@@ -5,55 +5,51 @@ import Shader from '../recursos/shader.vue'
 const props = defineProps({ route: String })
 const noteContent = ref('')
 
-async function loadNote(route) {
-    if (!route) return
+async function loadNote(slug) {
+    if (!slug) return
     try {
-        // remover index.html si existe y asegurar que termina en /
-        const cleanRoute = route.replace(/index\.html$/, '')
-        const url = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/${cleanRoute.replace(/^\/+/, '')}`
+        // fetch directo a /posts/<slug>/ (sin index.html)
+        const url = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/posts/${slug}/`
         const res = await fetch(url)
         if (!res.ok) throw new Error(`HTTP error ${res.status}`)
         noteContent.value = await res.text()
     } catch (e) {
         noteContent.value = `<p>Error cargando la nota</p>`
-        console.error(`Error fetching route "${route}":`, e)
+        console.error(`Error fetching slug "${slug}":`, e)
     }
+}
+
+function extractSlugFromPath(pathname) {
+    const parts = pathname.replace(import.meta.env.BASE_URL.replace(/\/$/, ''), '').split('/')
+    return parts[1] || ''
 }
 
 // inicializar ruta desde URL si existe
 onMounted(() => {
-    const path = window.location.pathname.replace(import.meta.env.BASE_URL.replace(/\/$/, ''), '')
-    if (path && path !== '/') {
-        loadNote(path)
-    }
+    const slug = extractSlugFromPath(window.location.pathname)
+    if (slug) loadNote(slug)
 })
 
 // actualizar contenido cuando cambia props.route
 watch(
     () => props.route,
-    (route) => {
-        if (!route) return
-        loadNote(route)
-        // actualizar URL sin recargar la página
-        history.pushState(
-            { route },
-            '',
-            `${import.meta.env.BASE_URL.replace(/\/$/, '')}/${route.replace(/^\/+/, '')}`
-        )
+    (slug) => {
+        if (!slug) return
+        loadNote(slug)
+        history.pushState({ route: slug }, '', `${import.meta.env.BASE_URL.replace(/\/$/, '')}/note/${slug}/`)
     },
     { immediate: false }
 )
 
-// escuchar back/forward
 window.addEventListener('popstate', (e) => {
-    const route = e.state?.route || ''
-    loadNote(route)
+    const slug = e.state?.route || extractSlugFromPath(window.location.pathname)
+    loadNote(slug)
 })
 </script>
 
 <template>
     <div class="post">
-        <Shader v-if="!route" />
+        <Shader v-if="!props.route" />
         <div v-else class="text" v-html="noteContent"></div>
     </div>
 </template>
