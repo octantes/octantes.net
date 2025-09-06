@@ -15,12 +15,8 @@ const cacheFile = './.build-cache.json'
 const siteUrl = 'https://octantes.github.io'
 
 let cache = {}
-try {
-  const cacheRaw = await fs.readFile(cacheFile, 'utf-8')
-  cache = JSON.parse(cacheRaw)
-} catch { cache = {} }
+try { cache = JSON.parse(await fs.readFile(cacheFile, 'utf-8')) } catch {}
 
-// --- limpieza de directorios obsoletos ---
 const postDirs = (await fs.readdir(contentDir, { withFileTypes: true }))
   .filter(d => d.isDirectory())
   .map(d => d.name)
@@ -38,7 +34,6 @@ try {
   }
 } catch { await fs.mkdir(postsDir, { recursive: true }) }
 
-// --- generar HTML, meta tags, JSON-LD ---
 const indexItems = []
 
 for (const slug of postDirs) {
@@ -52,7 +47,6 @@ for (const slug of postDirs) {
   const noteOutputDir = path.join(postsDir, slug)
   await fs.mkdir(noteOutputDir, { recursive: true })
 
-  // --- hash combinado + copia de assets con compresión ---
   const hash = crypto.createHash('sha256').update(raw)
   try {
     const assets = await fs.readdir(postFolder, { withFileTypes: true })
@@ -79,8 +73,10 @@ for (const slug of postDirs) {
   if (cache[`${slug}/index.md`] !== finalHash) {
     let htmlContent = md.render(body)
 
-    // --- ajustar rutas usando import.meta.env.BASE_URL ---
-    htmlContent = htmlContent.replace(/(src|href)=['"]\.\/([^'"]+)['"]/g, `$1="\${import.meta.env.BASE_URL}posts/${slug}/$2"`)
+    // --- rutas relativas estilo antiguo para que URL directo funcione ---
+    const relativeDepth = path.relative(outputDir, noteOutputDir).split(path.sep).length
+    const basePath = '../'.repeat(relativeDepth)
+    htmlContent = htmlContent.replace(/(src|href)=['"]\.\/([^'"]+)['"]/g, `$1=$2${basePath}$2`)
 
     // --- lazy loading, dimensiones fijas, alt ---
     htmlContent = htmlContent.replace(/<img\s+([^>]+?)>/g, (match, attrs) => {
@@ -136,18 +132,6 @@ ${handle ? `<meta name="twitter:creator" content="@${handle}">` : ''}
   "author": ${handle ? `{"@type":"Person","name":"${handle}","url":"https://twitter.com/${handle}"}` : '{"@type":"Person","name":"Desconocido"}'}
 }
 </script>
-
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  "itemListElement": [
-    { "@type": "ListItem", "position": 1, "name": "Home", "item": "${siteUrl}/" },
-    { "@type": "ListItem", "position": 2, "name": "Posts", "item": "${siteUrl}/posts/" },
-    { "@type": "ListItem", "position": 3, "name": "${title}", "item": "${canonicalUrl}" }
-  ]
-}
-</script>
 `.trim()
 
     let fullHtml = `
@@ -172,20 +156,17 @@ ${htmlContent}
 
     await fs.writeFile(path.join(noteOutputDir, 'index.html'), fullHtml)
     cache[`${slug}/index.md`] = finalHash
-  } else {
-    console.log(`skip ${slug}/index.md (unchanged)`)
-  }
+  } else console.log(`skip ${slug}/index.md (unchanged)`)
 
   indexItems.push({
     slug,
     title: attributes.title || slug,
     date: attributes.date || '',
     tags: attributes.tags || [],
-    url: `/posts/${slug}/`
+    url: `/posts/${slug}/` // mantiene routing antiguo
   })
 }
 
-// --- dist --- 
 await fs.mkdir(outputDir, { recursive: true })
 
 // --- index.json ---
