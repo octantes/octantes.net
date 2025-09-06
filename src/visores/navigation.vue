@@ -16,7 +16,7 @@ function openNote(slug) {
     // eliminar prefijo /posts/ si lo trae del index.json
     const cleanSlug = slug.replace(/^\/posts\//, '').replace(/\/$/, '')
     emit('update:modelValue', cleanSlug)
-    history.pushState({ route: cleanSlug }, '', `${import.meta.env.BASE_URL.replace(/\/$/, '')}/note/${cleanSlug}/`)
+    history.pushState({ route: cleanSlug }, '', `${import.meta.env.BASE_URL.replace(/\/$/, '')}/${cleanSlug}/`)
 }
 </script>
 

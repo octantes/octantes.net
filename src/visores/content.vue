@@ -5,7 +5,7 @@ import Shader from '../recursos/shader.vue'
 const props = defineProps({ route: String })
 const noteContent = ref('')
 
-// fetchea directamente /posts/<slug>/
+// fetchea directamente /posts/<slug>/ (ya devuelve el html)
 async function loadNote(slug) {
     if (!slug) return
     try {
@@ -19,10 +19,10 @@ async function loadNote(slug) {
     }
 }
 
-// extrae solo el slug real después de /note/
+// extrae el slug tomando siempre el último segmento de la URL
 function extractSlugFromPath(pathname) {
-    const parts = pathname.replace(import.meta.env.BASE_URL.replace(/\/$/, ''), '').split('/')
-    return parts[1] === 'note' ? parts[2] : ''
+    const parts = pathname.replace(import.meta.env.BASE_URL.replace(/\/$/, ''), '').split('/').filter(Boolean)
+    return parts.length ? parts[parts.length - 1] : ''
 }
 
 // inicializar ruta desde URL externa
@@ -37,7 +37,7 @@ watch(
     (slug) => {
         if (!slug) return
         loadNote(slug)
-        history.pushState({ route: slug }, '', `${import.meta.env.BASE_URL.replace(/\/$/, '')}/note/${slug}/`)
+        history.pushState({ route: slug }, '', `${import.meta.env.BASE_URL.replace(/\/$/, '')}/${slug}/`)
     },
     { immediate: false }
 )

@@ -1,4 +1,0 @@
-User-agent: *
-Disallow:
-
-Sitemap: https://octantes.github.io/sitemap.xml
