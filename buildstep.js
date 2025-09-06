@@ -3,9 +3,6 @@ import path from 'path'
 import crypto from 'crypto'
 import MarkdownIt from 'markdown-it'
 import fm from 'front-matter'
-import sizeOf from 'image-size'
-import sharp from 'sharp'
-import { minify } from 'html-minifier-terser'
 
 const md = new MarkdownIt()
 
@@ -15,8 +12,14 @@ const cacheFile = './.build-cache.json'
 const siteUrl = 'https://octantes.github.io'
 
 let cache = {}
-try { cache = JSON.parse(await fs.readFile(cacheFile, 'utf-8')) } catch {}
+try {
+  const cacheRaw = await fs.readFile(cacheFile, 'utf-8')
+  cache = JSON.parse(cacheRaw)
+} catch {
+  cache = {}
+}
 
+// --- limpieza de directorios obsoletos en dist/posts ---
 const postDirs = (await fs.readdir(contentDir, { withFileTypes: true }))
   .filter(d => d.isDirectory())
   .map(d => d.name)
@@ -32,38 +35,37 @@ try {
       delete cache[`${slug}/index.md`]
     }
   }
-} catch { await fs.mkdir(postsDir, { recursive: true }) }
+} catch {
+  await fs.mkdir(postsDir, { recursive: true })
+}
 
+// --- generar HTML y construir índice ---
 const indexItems = []
-
 for (const slug of postDirs) {
   const postFolder = path.join(contentDir, slug)
   const mdPath = path.join(postFolder, 'index.md')
   let raw
-  try { raw = await fs.readFile(mdPath, 'utf-8') }
-  catch { console.warn(`no se encontró index.md en ${slug}, se saltea`); continue }
+  try {
+    raw = await fs.readFile(mdPath, 'utf-8')
+  } catch {
+    console.warn(`no se encontró index.md en ${slug}, se saltea`)
+    continue
+  }
 
   const { attributes, body } = fm(raw)
   const noteOutputDir = path.join(postsDir, slug)
   await fs.mkdir(noteOutputDir, { recursive: true })
 
+  // --- hash combinado de markdown + assets + copia de assets ---
   const hash = crypto.createHash('sha256').update(raw)
   try {
     const assets = await fs.readdir(postFolder, { withFileTypes: true })
     for (const asset of assets) {
-      if (!asset.isFile() || asset.name === 'index.md') continue
-      const assetPath = path.join(postFolder, asset.name)
-      const destPath = path.join(noteOutputDir, asset.name)
-      const data = await fs.readFile(assetPath)
-      hash.update(data)
-
-      if (/\.(jpe?g|png)$/i.test(asset.name)) {
-        await sharp(assetPath)
-          .resize({ width: 1200 })
-          .webp({ quality: 80 })
-          .toFile(destPath.replace(/\.(jpe?g|png)$/i, '.webp'))
-      } else {
-        await fs.writeFile(destPath, data)
+      if (asset.isFile() && asset.name !== 'index.md') {
+        const assetPath = path.join(postFolder, asset.name)
+        const data = await fs.readFile(assetPath)
+        hash.update(data)
+        await fs.writeFile(path.join(noteOutputDir, asset.name), data)
       }
     }
   } catch {}
@@ -73,73 +75,21 @@ for (const slug of postDirs) {
   if (cache[`${slug}/index.md`] !== finalHash) {
     let htmlContent = md.render(body)
 
-    // --- rutas relativas estilo antiguo para que URL directo funcione ---
+    // --- ajustar rutas relativas de assets ---
     const relativeDepth = path.relative(outputDir, noteOutputDir).split(path.sep).length
     const basePath = '../'.repeat(relativeDepth)
-    htmlContent = htmlContent.replace(/(src|href)=['"]\.\/([^'"]+)['"]/g, `$1=$2${basePath}$2`)
+    htmlContent = htmlContent.replace(/(src|href)=(['"])\.\//g, `$1=$2${basePath}`)
 
-    // --- lazy loading, dimensiones fijas, alt ---
-    htmlContent = htmlContent.replace(/<img\s+([^>]+?)>/g, (match, attrs) => {
-      const srcMatch = attrs.match(/src=['"]([^'"]+)['"]/)
-      const altMatch = attrs.match(/alt=['"]([^'"]*)['"]/)
-      if (!srcMatch) return match
-      const src = path.join(noteOutputDir, srcMatch[1])
-      let dimensions = { width: 600, height: 400 }
-      if (srcMatch[1] === attributes.portada) dimensions = { width: 1200, height: 630 }
-      else { try { dimensions = sizeOf(src) } catch {} }
-      const altText = altMatch ? altMatch[1] : ''
-      let newAttrs = attrs
-        .replace(/width=['"][^'"]*['"]/, '')
-        .replace(/height=['"][^'"]*['"]/, '')
-        .replace(/alt=['"][^'"]*['"]/, '')
-      newAttrs += ` width="${dimensions.width}" height="${dimensions.height}" loading="lazy" alt="${altText}"`
-      return `<img ${newAttrs}>`
-    })
-
+    // --- agregar <title> y <meta description> básicos ---
     const title = attributes.title || slug
     const description = attributes.description || ''
-    const portada = attributes.portada ? `${siteUrl}/posts/${slug}/${attributes.portada}` : ''
-    const canonicalUrl = `${siteUrl}/posts/${slug}/`
-    const handle = attributes.handle ? attributes.handle.replace(/^@/, '') : ''
-
-    const metaTags = `
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="${description}">
-<link rel="canonical" href="${canonicalUrl}">
-
-<meta property="og:type" content="article">
-<meta property="og:title" content="${title}">
-<meta property="og:description" content="${description}">
-<meta property="og:url" content="${canonicalUrl}">
-${portada ? `<meta property="og:image" content="${portada}">` : ''}
-
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="${title}">
-<meta name="twitter:description" content="${description}">
-${portada ? `<meta name="twitter:image" content="${portada}">` : ''}
-${handle ? `<meta name="twitter:creator" content="@${handle}">` : ''}
-
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "Article",
-  "headline": "${title}",
-  "description": "${description}",
-  "image": "${portada || ''}",
-  "url": "${canonicalUrl}",
-  "datePublished": "${attributes.date || new Date().toISOString()}",
-  "author": ${handle ? `{"@type":"Person","name":"${handle}","url":"https://twitter.com/${handle}"}` : '{"@type":"Person","name":"Desconocido"}'}
-}
-</script>
-`.trim()
-
-    let fullHtml = `
+    htmlContent = `
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<meta charset="UTF-8">
 <title>${title}</title>
-${metaTags}
+<meta name="description" content="${description}">
 </head>
 <body>
 ${htmlContent}
@@ -147,68 +97,72 @@ ${htmlContent}
 </html>
 `.trim()
 
-    fullHtml = await minify(fullHtml, {
-      collapseWhitespace: true,
-      removeComments: true,
-      removeRedundantAttributes: true,
-      removeEmptyAttributes: true,
-    })
-
-    await fs.writeFile(path.join(noteOutputDir, 'index.html'), fullHtml)
+    await fs.writeFile(path.join(noteOutputDir, 'index.html'), htmlContent)
     cache[`${slug}/index.md`] = finalHash
-  } else console.log(`skip ${slug}/index.md (unchanged)`)
+  } else {
+    console.log(`skip ${slug}/index.md (unchanged)`)
+  }
 
   indexItems.push({
     slug,
     title: attributes.title || slug,
     date: attributes.date || '',
     tags: attributes.tags || [],
-    url: `/posts/${slug}/` // mantiene routing antiguo
+    url: `/posts/${slug}/` // URL limpia sin index.html
   })
 }
 
+// asegurarse de que dist exista
 await fs.mkdir(outputDir, { recursive: true })
 
-// --- index.json ---
+// --- minimizar escrituras de index.json ---
 const indexPath = path.join(outputDir, 'index.json')
 let prevIndex = '[]'
-try { prevIndex = await fs.readFile(indexPath, 'utf-8') } catch {}
-indexItems.sort((a,b)=> (a.date?new Date(a.date):new Date(0)) - (b.date?new Date(b.date):new Date(0))).reverse()
-const newIndexStr = JSON.stringify(indexItems,null,2)
-if (prevIndex !== newIndexStr) await fs.writeFile(indexPath,newIndexStr),console.log('index.json actualizado')
-else console.log('index.json sin cambios, no se sobrescribe')
+try {
+  prevIndex = await fs.readFile(indexPath, 'utf-8')
+} catch {}
 
-// --- sitemap.xml ---
-const staticPages = [
-  { url: '/', lastmod: new Date().toISOString() },
-  { url: '/about/', lastmod: new Date().toISOString() },
-  { url: '/contact/', lastmod: new Date().toISOString() }
-]
-const postPages = indexItems.map(post=>({url:post.url,lastmod:post.date||new Date().toISOString()}))
-const allPages = [...staticPages,...postPages]
-const sitemapItems = allPages.map(p=>`
+indexItems.sort((a, b) => {
+  const dateA = a.date ? new Date(a.date) : new Date(0)
+  const dateB = b.date ? new Date(b.date) : new Date(0)
+  return dateB - dateA
+})
+
+const newIndexStr = JSON.stringify(indexItems, null, 2)
+
+if (prevIndex !== newIndexStr) {
+  await fs.writeFile(indexPath, newIndexStr)
+  console.log('index.json actualizado')
+} else {
+  console.log('index.json sin cambios, no se sobrescribe')
+}
+
+// --- generar sitemap.xml ---
+const sitemapItems = indexItems.map(post => `
   <url>
-    <loc>${siteUrl}${p.url}</loc>
-    <lastmod>${p.lastmod}</lastmod>
+    <loc>${siteUrl}${post.url}</loc>
+    <lastmod>${post.date || new Date().toISOString()}</lastmod>
   </url>
 `).join('\n')
+
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${sitemapItems}
 </urlset>`
-await fs.writeFile(path.join(outputDir,'sitemap.xml'),sitemap)
-console.log('sitemap.xml actualizado')
 
-// --- robots.txt ---
+await fs.writeFile(path.join(outputDir, 'sitemap.xml'), sitemap)
+console.log('sitemap.xml generado')
+
+// --- generar robots.txt ---
 const robots = `User-agent: *
 Disallow:
 
 Sitemap: ${siteUrl}/sitemap.xml
 `
-await fs.writeFile(path.join(outputDir,'robots.txt'),robots)
+await fs.writeFile(path.join(outputDir, 'robots.txt'), robots)
 console.log('robots.txt generado')
 
-// --- cache ---
-await fs.writeFile(cacheFile,JSON.stringify(cache,null,2))
+// escribir cache
+await fs.writeFile(cacheFile, JSON.stringify(cache, null, 2))
 
 console.log('build completado: html de notas + index.json + sitemap.xml + robots.txt + cache generados.')
