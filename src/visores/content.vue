@@ -51,7 +51,7 @@ window.addEventListener('popstate', (e) => {
 
 <template>
     <div class="post">
-        <Shader v-if="!props.route" />
+        <Shader v-if="!noteContent" />
         <div v-else class="text" v-html="noteContent"></div>
     </div>
 </template>
