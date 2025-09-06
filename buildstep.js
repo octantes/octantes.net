@@ -79,10 +79,8 @@ for (const slug of postDirs) {
   if (cache[`${slug}/index.md`] !== finalHash) {
     let htmlContent = md.render(body)
 
-    // --- ajustar rutas relativas ---
-    const relativeDepth = path.relative(outputDir, noteOutputDir).split(path.sep).length
-    const basePath = '../'.repeat(relativeDepth)
-    htmlContent = htmlContent.replace(/(src|href)=(['"])\.\//g, `$1=$2${basePath}`)
+    // --- ajustar rutas usando import.meta.env.BASE_URL ---
+    htmlContent = htmlContent.replace(/(src|href)=['"]\.\/([^'"]+)['"]/g, `$1="\${import.meta.env.BASE_URL}posts/${slug}/$2"`)
 
     // --- lazy loading, dimensiones fijas, alt ---
     htmlContent = htmlContent.replace(/<img\s+([^>]+?)>/g, (match, attrs) => {
