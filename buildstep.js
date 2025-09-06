@@ -80,9 +80,10 @@ for (const slug of postDirs) {
     const basePath = '../'.repeat(relativeDepth)
     htmlContent = htmlContent.replace(/(src|href)=(['"])\.\//g, `$1=$2${basePath}`)
 
-    // --- agregar <title> y <meta description> básicos ---
+    // --- agregar <title>, <meta description> y canonical ---
     const title = attributes.title || slug
     const description = attributes.description || ''
+    const canonicalUrl = `${siteUrl}/posts/${slug}/`
     htmlContent = `
 <!DOCTYPE html>
 <html lang="es">
@@ -90,6 +91,7 @@ for (const slug of postDirs) {
 <meta charset="UTF-8">
 <title>${title}</title>
 <meta name="description" content="${description}">
+<link rel="canonical" href="${canonicalUrl}">
 </head>
 <body>
 ${htmlContent}
@@ -137,11 +139,24 @@ if (prevIndex !== newIndexStr) {
   console.log('index.json sin cambios, no se sobrescribe')
 }
 
-// --- generar sitemap.xml ---
-const sitemapItems = indexItems.map(post => `
+// --- generar sitemap.xml incluyendo páginas estáticas ---
+const staticPages = [
+  { url: '/', lastmod: new Date().toISOString() },
+  { url: '/about/', lastmod: new Date().toISOString() },
+  { url: '/contact/', lastmod: new Date().toISOString() }
+]
+
+const postPages = indexItems.map(post => ({
+  url: post.url,
+  lastmod: post.date || new Date().toISOString()
+}))
+
+const allPages = [...staticPages, ...postPages]
+
+const sitemapItems = allPages.map(p => `
   <url>
-    <loc>${siteUrl}${post.url}</loc>
-    <lastmod>${post.date || new Date().toISOString()}</lastmod>
+    <loc>${siteUrl}${p.url}</loc>
+    <lastmod>${p.lastmod}</lastmod>
   </url>
 `).join('\n')
 
@@ -151,7 +166,7 @@ ${sitemapItems}
 </urlset>`
 
 await fs.writeFile(path.join(outputDir, 'sitemap.xml'), sitemap)
-console.log('sitemap.xml generado')
+console.log('sitemap.xml actualizado con todas las páginas')
 
 // --- generar robots.txt ---
 const robots = `User-agent: *
