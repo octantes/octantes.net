@@ -5,7 +5,7 @@ import MarkdownIt from 'markdown-it'
 import fm from 'front-matter'
 import sizeOf from 'image-size'
 import sharp from 'sharp'
-import { minify } from 'html-minifier'
+import { minify } from 'html-minifier-terser'
 
 const md = new MarkdownIt()
 
@@ -65,7 +65,7 @@ for (const slug of postDirs) {
 
       if (/\.(jpe?g|png)$/i.test(asset.name)) {
         await sharp(assetPath)
-          .resize({ width: 1200 })       // opcional
+          .resize({ width: 1200 })
           .webp({ quality: 80 })
           .toFile(destPath.replace(/\.(jpe?g|png)$/i, '.webp'))
       } else {
@@ -165,7 +165,7 @@ ${htmlContent}
 </html>
 `.trim()
 
-    fullHtml = minify(fullHtml, {
+    fullHtml = await minify(fullHtml, {
       collapseWhitespace: true,
       removeComments: true,
       removeRedundantAttributes: true,
