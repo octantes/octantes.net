@@ -8,7 +8,10 @@ const noteContent = ref('')
 async function loadNote(route) {
     if (!route) return
     try {
-        const res = await fetch(`${import.meta.env.BASE_URL.replace(/\/$/, '')}/${route.replace(/^\/+/, '')}`)
+        // remover index.html si existe y asegurar que termina en /
+        const cleanRoute = route.replace(/index\.html$/, '')
+        const url = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/${cleanRoute.replace(/^\/+/, '')}`
+        const res = await fetch(url)
         if (!res.ok) throw new Error(`HTTP error ${res.status}`)
         noteContent.value = await res.text()
     } catch (e) {

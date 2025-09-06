@@ -13,11 +13,12 @@ onMounted(async () => {
 })
 
 function openNote(url) {
-  emit('update:modelValue', url)
+  const cleanUrl = url.replace(/index\.html$/, '')  // url limpia
+  emit('update:modelValue', cleanUrl)
   history.pushState(
-    { route: url },
-    '',
-    `${import.meta.env.BASE_URL.replace(/\/$/, '')}/${url.replace(/^\/+/, '')}`
+      { route: cleanUrl },
+      '',
+      `${import.meta.env.BASE_URL.replace(/\/$/, '')}/${cleanUrl.replace(/^\/+/, '')}`
   )
 }
 </script>
