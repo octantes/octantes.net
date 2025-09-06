@@ -73,12 +73,12 @@ for (const slug of postDirs) {
   if (cache[`${slug}/index.md`] !== finalHash) {
     let htmlContent = md.render(body)
 
-    // --- rutas relativas estilo antiguo para que URL directo funcione ---
+    // --- rutas relativas ---
     const relativeDepth = path.relative(outputDir, noteOutputDir).split(path.sep).length
     const basePath = '../'.repeat(relativeDepth)
     htmlContent = htmlContent.replace(/(src|href)=['"]\.\/([^'"]+)['"]/g, `$1=$2${basePath}$2`)
 
-    // --- lazy loading, dimensiones fijas, alt ---
+    // --- lazy loading, dimensiones, alt ---
     htmlContent = htmlContent.replace(/<img\s+([^>]+?)>/g, (match, attrs) => {
       const srcMatch = attrs.match(/src=['"]([^'"]+)['"]/)
       const altMatch = attrs.match(/alt=['"]([^'"]*)['"]/)
@@ -119,7 +119,6 @@ ${portada ? `<meta property="og:image" content="${portada}">` : ''}
 <meta name="twitter:description" content="${description}">
 ${portada ? `<meta name="twitter:image" content="${portada}">` : ''}
 ${handle ? `<meta name="twitter:creator" content="@${handle}">` : ''}
-
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -163,7 +162,7 @@ ${htmlContent}
     title: attributes.title || slug,
     date: attributes.date || '',
     tags: attributes.tags || [],
-    url: `/posts/${slug}/` // mantiene routing antiguo
+    url: `/posts/${slug}/`
   })
 }
 
@@ -176,7 +175,7 @@ try { prevIndex = await fs.readFile(indexPath, 'utf-8') } catch {}
 indexItems.sort((a,b)=> (a.date?new Date(a.date):new Date(0)) - (b.date?new Date(b.date):new Date(0))).reverse()
 const newIndexStr = JSON.stringify(indexItems,null,2)
 if (prevIndex !== newIndexStr) await fs.writeFile(indexPath,newIndexStr),console.log('index.json actualizado')
-else console.log('index.json sin cambios, no se sobrescribe')
+else console.log('index.json sin cambios')
 
 // --- sitemap.xml ---
 const staticPages = [
@@ -211,4 +210,15 @@ console.log('robots.txt generado')
 // --- cache ---
 await fs.writeFile(cacheFile,JSON.stringify(cache,null,2))
 
-console.log('build completado: html de notas + index.json + sitemap.xml + robots.txt + cache generados.')
+// --- 404.html (clonado de index.html para GitHub Pages SPA routing) ---
+try {
+  const indexHtmlPath = path.join(outputDir, 'index.html')
+  const notFoundPath = path.join(outputDir, '404.html')
+  const indexHtml = await fs.readFile(indexHtmlPath, 'utf-8')
+  await fs.writeFile(notFoundPath, indexHtml)
+  console.log('404.html generado a partir de index.html')
+} catch (e) {
+  console.error('no se pudo generar 404.html', e)
+}
+
+console.log('build completado: notas + index.json + sitemap.xml + robots.txt + cache + 404.html generados.')
