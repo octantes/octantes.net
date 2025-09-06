@@ -134,7 +134,6 @@ ${handle ? `<meta name="twitter:creator" content="@${handle}">` : ''}
 </script>
 `.trim()
 
-    // --- html de nota ajustado para SPA --- 
     let fullHtml = `
 <!DOCTYPE html>
 <html lang="es">
@@ -143,21 +142,7 @@ ${handle ? `<meta name="twitter:creator" content="@${handle}">` : ''}
 ${metaTags}
 </head>
 <body>
-<div id="note-content">
 ${htmlContent}
-</div>
-<script>
-  // disparar evento para SPA si está cargada
-  const route = '/posts/${slug}/';
-  function triggerSPA() {
-    if (window.__SPA_READY__) {
-      window.dispatchEvent(new CustomEvent('spa-load-note', { detail: route }));
-    } else {
-      setTimeout(triggerSPA, 50);
-    }
-  }
-  triggerSPA();
-</script>
 </body>
 </html>
 `.trim()
@@ -178,7 +163,7 @@ ${htmlContent}
     title: attributes.title || slug,
     date: attributes.date || '',
     tags: attributes.tags || [],
-    url: `/posts/${slug}/`
+    url: `/posts/${slug}/` // mantiene routing antiguo
   })
 }
 
