@@ -5,10 +5,10 @@ import Shader from '../recursos/shader.vue'
 const props = defineProps({ route: String })
 const noteContent = ref('')
 
+// fetchea directamente /posts/<slug>/
 async function loadNote(slug) {
     if (!slug) return
     try {
-        // fetch directo a /posts/<slug>/ (sin index.html)
         const url = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/posts/${slug}/`
         const res = await fetch(url)
         if (!res.ok) throw new Error(`HTTP error ${res.status}`)
@@ -19,12 +19,13 @@ async function loadNote(slug) {
     }
 }
 
+// extrae solo el slug real después de /note/
 function extractSlugFromPath(pathname) {
     const parts = pathname.replace(import.meta.env.BASE_URL.replace(/\/$/, ''), '').split('/')
-    return parts[1] || ''
+    return parts[1] === 'note' ? parts[2] : ''
 }
 
-// inicializar ruta desde URL si existe
+// inicializar ruta desde URL externa
 onMounted(() => {
     const slug = extractSlugFromPath(window.location.pathname)
     if (slug) loadNote(slug)
@@ -41,6 +42,7 @@ watch(
     { immediate: false }
 )
 
+// escuchar back/forward
 window.addEventListener('popstate', (e) => {
     const slug = e.state?.route || extractSlugFromPath(window.location.pathname)
     loadNote(slug)
